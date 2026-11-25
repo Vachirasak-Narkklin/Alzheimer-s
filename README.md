@@ -14,7 +14,11 @@
 หลังลงทะเบียนและยอมรับเงื่อนไข: <https://sites.wustl.edu/oasisbrains/> (ชุด OASIS-1: Cross-sectional MRI Data)
 
 อ้างอิง: Marcus, D. S., et al. (2007). Open Access Series of Imaging Studies (OASIS): Cross-sectional MRI data in
-young, middle aged, nondemented, and demented older adults. *Journal of Cognitive Neuroscience*, 19(9), 1498-1507.
+young, middle aged, nondemented, and demented older adults. *Journal of Cognitive Neuroscience*, 19(9), 1498-1507. https://doi.org/10.1162/jocn.2007.19.9.1498
+
+ข้อความขอบคุณแหล่งข้อมูลตามที่ OASIS กำหนด: "Data were provided [in part] by OASIS-1: Cross-Sectional:
+Principal Investigators: D. Marcus, R. Buckner, J. Csernansky, J. Morris; NIH grants P50 AG05681,
+P01 AG03991, P01 AG026276, R01 AG021910, P20 MH071616, U24 RR021382"
 
 ตั้งตำแหน่งข้อมูลด้วยตัวแปรสภาพแวดล้อม `OASIS_ROOT` (ค่าเริ่มต้นอยู่ใน `src/00-shared/processing_lock.py`)
 และแก้ `SHARED_DIR` ในเซลล์ตั้งค่าของแต่ละโน้ตบุ๊กให้ตรงกับตำแหน่งจริงบนเครื่อง
