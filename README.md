@@ -1,149 +1,200 @@
-# การวิเคราะห์สภาวะอัลไซเมอร์จากภาพถ่ายคลื่นแม่เหล็กไฟฟ้าด้วยการเรียนรู้เชิงลึก
+# Alzheimer's Disease Analysis from Brain MRI Using Deep Learning
 
-โครงงานปริญญานิพนธ์: จำแนกผู้เป็น / ไม่เป็นโรคอัลไซเมอร์ (2 กลุ่ม) จากภาพ MRI สมอง 3 มิติของชุดข้อมูล OASIS-1
-ด้วยโมเดล 9 กลุ่ม (Baseline CNN, ResNet-18, ResNet-50 × 2D, 2.5D, 3D) ปล่อยให้โมเดลเรียนรู้ตำแหน่งสำคัญเองจากสมองทั้งก้อน
-แล้วใช้ Grad-CAM ตรวจว่าโมเดลมองบริเวณไหน
+Senior thesis project (Computer Science, Silpakorn University). We classify **Alzheimer's / not Alzheimer's**
+(binary) from 3D brain MRI of the **OASIS-1** dataset. Nine model groups are compared
+(Baseline CNN, ResNet-18, ResNet-50 x 2D, 2.5D, 3D). Instead of cropping the hippocampus, the whole brain is given
+to the model, and Grad-CAM is used to check which regions the model relies on.
 
-- ป้ายกำกับจากค่า CDR: `CDR = 0` ปกติ, `CDR >= 0.5` อัลไซเมอร์, ไม่มีค่า CDR ตัดทิ้ง
-- ข้อมูล 234 คน แบ่งระดับบุคคล: ฝึก 163 / ตรวจสอบ 35 / ทดสอบ 36 (`src/00-shared/split.json`)
-- ล็อกค่าเตรียมภาพและการเพิ่มความหลากหลายของข้อมูลร่วมกันทุกกลุ่ม เลือกโมเดลด้วยชุดตรวจสอบ และเปิดชุดทดสอบครั้งเดียว
+- Labels from CDR: `CDR = 0` -> normal, `CDR >= 0.5` -> Alzheimer's, subjects without a CDR value are discarded.
+- 234 subjects, split at subject level: train 163 / validation 35 / test 36 (`src/00-shared/split.json`).
+- Preprocessing and augmentation are locked and shared by all groups; models are selected on the validation set;
+  the test set is opened once.
 
-## ข้อมูล (ไม่รวมใน repository นี้)
+## Data
 
-ภาพ MRI **ไม่ได้อยู่ใน repository** ติดเงื่อนไขการใช้ข้อมูลของ OASIS ให้ดาวน์โหลดเองจากโครงการ OASIS
-หลังลงทะเบียนและยอมรับเงื่อนไข: <https://sites.wustl.edu/oasisbrains/> (ชุด OASIS-1: Cross-sectional MRI Data)
+The MRI data are **not distributed with this repository**. Please download OASIS-1 (Cross-sectional MRI Data)
+yourself from the OASIS project after registering and accepting its terms: <https://sites.wustl.edu/oasisbrains/>
 
-อ้างอิง: Marcus, D. S., et al. (2007). Open Access Series of Imaging Studies (OASIS): Cross-sectional MRI data in
-young, middle aged, nondemented, and demented older adults. *Journal of Cognitive Neuroscience*, 19(9), 1498-1507. https://doi.org/10.1162/jocn.2007.19.9.1498
+Citation: Marcus, D. S., et al. (2007). Open Access Series of Imaging Studies (OASIS): Cross-sectional MRI data in
+young, middle aged, nondemented, and demented older adults. *Journal of Cognitive Neuroscience*, 19(9), 1498-1507.
+https://doi.org/10.1162/jocn.2007.19.9.1498
 
-ข้อความขอบคุณแหล่งข้อมูลตามที่ OASIS กำหนด: "Data were provided [in part] by OASIS-1: Cross-Sectional:
+Acknowledgment required by OASIS: "Data were provided [in part] by OASIS-1: Cross-Sectional:
 Principal Investigators: D. Marcus, R. Buckner, J. Csernansky, J. Morris; NIH grants P50 AG05681,
 P01 AG03991, P01 AG026276, R01 AG021910, P20 MH071616, U24 RR021382"
 
-ตั้งตำแหน่งข้อมูลด้วยตัวแปรสภาพแวดล้อม `OASIS_ROOT` (ค่าเริ่มต้นอยู่ใน `src/00-shared/processing_lock.py`)
-และแก้ `SHARED_DIR` ในเซลล์ตั้งค่าของแต่ละโน้ตบุ๊กให้ตรงกับตำแหน่งจริงบนเครื่อง
+Set the data location with the `OASIS_ROOT` environment variable (default is in `src/00-shared/processing_lock.py`)
+and edit `SHARED_DIR` in the setup cell of each notebook to match your machine.
 
-## โครงสร้างโฟลเดอร์
+## Project setup
+
+| Item | Value |
+|---|---|
+| Input volume | 128 x 128 x 96 |
+| 2D input | one axial slice (slice 48) |
+| 2.5D input | three mid-slices: axial 48, coronal 64, sagittal 64 |
+| Augmentation (train only) | rotation +-10 deg, gamma d = 0.2; no flip, no noise, no scaling |
+| Training | 200 epochs, batch size 8, no early stopping |
+| Seeds | 1334, 42, 2026, 7, 2002 (ResNet and test); 3 seeds for Baseline development |
+| Checkpoint selection | epoch with the highest (AUC + F1) / 2 on the validation set |
+| Evaluation | AUC, F1, accuracy, sensitivity, specificity, threshold 0.5, test set opened once |
+
+## Repository structure
 
 ```text
 Alzheimer's/
-|-- Readme.txt                      (ไฟล์นี้)
+|-- README.md
+|-- requirements.txt
 `-- src/
-    |-- 00-shared/                  ไฟล์ล็อกกลางที่ทุกโมเดลใช้ร่วมกัน
-    |-- 01-data-review/             ตรวจและทำความเข้าใจข้อมูล
-    |-- 02-data-leakage/            สร้างและตรวจการแบ่งชุดข้อมูล (กันข้อมูลรั่ว)
-    |-- 03-augment/                 ทดลองเพิ่มความหลากหลายของข้อมูล (ResNet-18)
-    |-- 04-model/                   โมเดลทั้ง 9 กลุ่ม แยกตามรูปแบบข้อมูล
-        |-- 2D/    (Baseline, Resnet18, Resnet50)
-        |-- 25D/   (Baseline, Resnet18, Resnet50)
-        `-- 3D/    (0_Baseline, 1_Resnet18, 2_ResNet50, runcurves_cell.py)
-    `-- results/                    ผลการทดลอง (json / csv) ของแต่ละกลุ่ม ดูหัวข้อ "ผลลัพธ์"
+    |-- 00-shared/       locked files shared by every model (split, preprocessing, augmentation)
+    |-- 01-data-review/  data inspection and label creation
+    |-- 02-data-leakage/ split creation and leakage checks
+    |-- 03-augment/      augmentation sweeps (ResNet-18, 2D / 2.5D / 3D)
+    |-- 04-model/        the 9 model groups
+    |   |-- 2D/    (Baseline, Resnet18, Resnet50)
+    |   |-- 25D/   (Baseline, Resnet18, Resnet50)
+    |   `-- 3D/    (0_Baseline, 1_Resnet18, 2_ResNet50, runcurves_cell.py)
+    `-- results/         run results (json / csv)
 ```
 
-## รายละเอียดไฟล์
+### File details
 
 ```text
-[src/00-shared]  ไฟล์ล็อกกลาง
-  split.json                     รายชื่อผู้เข้าร่วมในชุดฝึก / ตรวจสอบ / ทดสอบ (ใช้ทุกโมเดล)
-  split_reference.json           ไฟล์อ้างอิงของการแบ่งข้อมูล ใช้เทียบตรวจ
-  processing_lock.py             ล็อกการเตรียมภาพ (ขนาดภาพ 128 x 128 x 96, การตัดค่า
-                                 ความเข้ม, การย่อภาพ, การสร้างอินพุต 2D / 2.5D / 3D จากปริมาตรที่ล็อก)
-  augmentation_lock.py           ล็อกการเพิ่มความหลากหลายของข้อมูล:
-                                 หมุน +-10 องศา, gamma d = 0.2, ไม่ใช้ noise,
-                                 ไม่พลิกซ้ายขวา; ค่าสุ่มกำหนดจาก (seed, epoch, subject_id)
-  load_locked_split_cell.py      เซลล์โค้ดอ่าน split.json ที่วางในโน้ตบุ๊กของทุกโมเดล
-  03_Slice_Position_Check.ipynb  ตรวจตำแหน่งภาพตัด (x, y, z) เทียบกับฮิปโปแคมปัส
-                                 บนปริมาตรที่ล็อกแล้ว
-  04_Test_Processing_Lock_3D.ipynb  ทดสอบ processing_lock.py กับ OASIS-1 จริง
-  processing_lock_test_report.json  รายงานผลการทดสอบข้างต้น
-  fig_processing_lock_check.png     รูปประกอบผลการทดสอบข้างต้น
+[src/00-shared]
+  split.json                        subject lists for train / validation / test (used by every model)
+  split_reference.json              reference copy used to verify the split
+  processing_lock.py                locked preprocessing (128 x 128 x 96, intensity clipping, resizing,
+                                    construction of 2D / 2.5D / 3D inputs)
+  augmentation_lock.py              locked augmentation: rotation +-10 deg, gamma d = 0.2, no noise, no
+                                    left-right flip; randomness is derived from (seed, epoch, subject_id)
+  load_locked_split_cell.py         code cell that loads split.json, pasted into every model notebook
+  03_Slice_Position_Check.ipynb     checks slice positions (x, y, z) against the hippocampus
+  04_Test_Processing_Lock_3D.ipynb  tests processing_lock.py on real OASIS-1 data
+  processing_lock_test_report.json, fig_processing_lock_check.png   outputs of the notebook above
 
-[src/01-data-review]  ตรวจข้อมูล
-  00_Review_Data.ipynb           ตรวจตารางข้อมูล ตัดคนที่ไม่มีค่า CDR ออก ตั้ง label
-  01_TargetShape_Experiment.ipynb  ทดลองเลือกขนาดภาพที่ใช้ (target shape)
-  A_Check_OASIS_Hippocampus.ipynb  ตรวจข้อมูล OASIS-1 เทียบแผนที่สมองก่อนทำ Grad-CAM
-  A_check_output/                ผลของไฟล์ข้างบน
-      hippocampus_slice_check.csv   ตารางตรวจภาพตัดเทียบฮิปโปแคมปัส
-      slice_vs_hippocampus.png      รูปภาพตัดเทียบฮิปโปแคมปัส
-      qc_overlay.png                รูปตรวจการซ้อนทับ
-  Check_Demographics_Split.ipynb ตรวจอายุและเพศของแต่ละชุดข้อมูล
-  age_distribution_by_split.png  รูปการกระจายอายุตามชุดข้อมูล
+[src/01-data-review]
+  00_Review_Data.ipynb              inspects the clinical table, drops subjects without CDR, builds labels
+  01_TargetShape_Experiment.ipynb   experiment for choosing the target shape
+  A_Check_OASIS_Hippocampus.ipynb   checks OASIS-1 against a brain atlas before Grad-CAM
+  Check_Demographics_Split.ipynb    age and sex of each split
+  A_check_output/, age_distribution_by_split.png   outputs
 
-[src/02-data-leakage]  การแบ่งชุดข้อมูลและการตรวจข้อมูลรั่ว
-  create_and_test_split_json.ipynb     สร้าง split.json และทดสอบ
-  preload_split_by_seed.ipynb          โหลดข้อมูลล่วงหน้าตามการแบ่งของแต่ละ seed
-  preload_locked_split_by_seed.ipynb   เช่นเดียวกัน แต่ใช้การแบ่งที่ล็อกแล้ว
-  preload_split_check.ipynb            ตรวจความถูกต้องของการแบ่ง
-  preload_split_check_3modes.ipynb     ตรวจการแบ่งทั้ง 3 รูปแบบข้อมูล (2D / 2.5D / 3D)
-  split_pairwise_seed_check.ipynb      ตรวจซ้อนทับของรายชื่อระหว่าง seed เป็นคู่ๆ
+[src/02-data-leakage]
+  create_and_test_split_json.ipynb, preload_split_by_seed.ipynb, preload_locked_split_by_seed.ipynb,
+  preload_split_check.ipynb, preload_split_check_3modes.ipynb, split_pairwise_seed_check.ipynb
+                                    create the split and verify there is no subject overlap
 
-[src/03-augment]  ทดลองการเพิ่มความหลากหลายของข้อมูล (ใช้ ResNet-18 ทดสอบ)
-  Aug_Rotation_ResNet18_{2D,25D,3D}.ipynb   ทดลองระดับการหมุน
-  Aug_Gamma_ResNet18_{2D,25D,3D}.ipynb      ทดลองระดับ gamma
-  Aug_Noise_ResNet18_{2D,25D,3D}.ipynb      ทดลองการเติม noise
-  Aug_Prob_ResNet18_{2D,25D,3D}.ipynb       ทดลองความน่าจะเป็นของการเพิ่มความหลากหลาย
-  ผลของโฟลเดอร์นี้นำไปกำหนดค่าใน 00-shared/augmentation_lock.py
+[src/03-augment]
+  Aug_{Rotation,Gamma,Noise,Prob}_ResNet18_{2D,25D,3D}.ipynb
+                                    augmentation sweeps; results define augmentation_lock.py
 
-[src/04-model]  โมเดลทั้ง 9 กลุ่ม
-  ไฟล์หลักของแต่ละกลุ่ม:
-  2D/Baseline/   Baseline_CNN3Layer_2D.ipynb
+[src/04-model]
+  2D/Baseline/   Baseline_CNN3Layer_2D.ipynb         (main file)
   2D/Resnet18/   Resnet18_2D.ipynb
   2D/Resnet50/   Resnet50_2D.ipynb
-  25D/Baseline/  Baseline_CNN3Layer_25D.ipynb
+  25D/Baseline/  Baseline_CNN3Layer_25D.ipynb        (main file)
   25D/Resnet18/  Resnet18_25D.ipynb
   25D/Resnet50/  Resnet50_25D.ipynb
-  3D/0_Baseline/ Baseline_CNN3Layer_3D.ipynb
-                 + Baseline_CNN3Layer_3D_BatchSize.ipynb   (ทดลองขนาดชุดย่อย)
-                 + Baseline_CNN3Layer_3D_Width_3seed.ipynb (ทดลองความกว้าง รัน 3 seed)
+  3D/0_Baseline/ Baseline_CNN3Layer_3D.ipynb (+ _BatchSize, _Width_3seed experiments)
   3D/1_Resnet18/ Resnet18_3D.ipynb
   3D/2_ResNet50/ Resnet50_3D.ipynb
-  3D/runcurves_cell.py   เซลล์โค้ดวาดกราฟต่อ epoch ของแต่ละรัน (อ่านจากไฟล์ผลที่บันทึกไว้)
-
-  ไฟล์ Baseline_CNN_{2D,25D,3D}.ipynb (ในโฟลเดอร์ Baseline ของแต่ละรูปแบบข้อมูล)
-  เป็นการรันเพิ่มเติมของ Baseline โดยใช้โครงสร้างและจำนวนพารามิเตอร์เดียวกับ
-  Baseline_CNN3Layer_* ไฟล์หลักที่ใช้อ้างอิงคือ Baseline_CNN3Layer_*
-
-  ไฟล์เสริมที่อยู่ในโฟลเดอร์โมเดล:
-  Check_Criteria_Baseline.ipynb   ตรวจเกณฑ์ตัดสินเลือกชุดค่า: ใช้วิธีเดียวกับ Baseline
-                                  แต่ margin มาจากความแปรปรวนของโมเดลนั้นเอง
-                                  (มีอยู่ในโฟลเดอร์ ResNet และ 3D/0_Baseline)
-  Grad-CAM_All_9_Models.ipynb     สร้างแผนภาพความร้อน Grad-CAM ของทั้ง 9 กลุ่มและตรวจ
-                                  ตำแหน่งเทียบฮิปโปแคมปัส (Harvard-Oxford atlas)
-  gradcam_defs/*.py               นิยามโมเดล 9 กลุ่ม (BASE_/R18_/R50_ x 2D/25D/3D) ที่
-                                  Grad-CAM โหลดน้ำหนักเข้าไป เนื้อหาเหมือนกันทุกสำเนา
-                                  (อยู่ใน 3D/0_Baseline, 3D/1_Resnet18, 3D/2_ResNet50)
-  หมายเหตุ: Grad-CAM_All_9_Models.ipynb มีสำเนาในหลายโฟลเดอร์ เพราะรันแยกตามกลุ่ม
-  เนื้อหาโค้ดใช้ร่วมกัน ผลลัพธ์ที่ตกค้างในไฟล์จึงต่างกันตามกลุ่มที่รัน
+  Baseline_CNN_{2D,25D,3D}.ipynb    additional Baseline runs with the same structure and parameter count
+  Check_Criteria_Baseline.ipynb     checks the selection criterion (margin from the model's own variance)
+  Grad-CAM_All_9_Models.ipynb       Grad-CAM of all 9 groups and overlap with the hippocampus
+                                    (Harvard-Oxford atlas); copies exist in several folders because it was run per group
+  gradcam_defs/*.py                 model definitions loaded by Grad-CAM (identical copies)
+  3D/runcurves_cell.py              plots per-epoch curves from saved result files
 ```
 
-## ลำดับการรัน
+## Run order
 
-1. `01-data-review` ตรวจข้อมูล ตั้ง label
-2. `02-data-leakage` สร้าง / ตรวจ `split.json`
-3. `00-shared` ตรวจ `processing_lock.py` และตำแหน่งภาพตัด
-4. `03-augment` ทดลองการเพิ่มความหลากหลายของข้อมูล (ได้ค่าใน `augmentation_lock.py`)
-5. `04-model` เทรน / รันซ้ำแต่ละกลุ่ม
-6. `04-model/.../Grad-CAM_All_9_Models.ipynb` อธิบายผลของโมเดล
+1. `01-data-review` - inspect the data and create labels
+2. `02-data-leakage` - create and verify `split.json`
+3. `00-shared` - check `processing_lock.py` and slice positions
+4. `03-augment` - augmentation sweeps (give the values in `augmentation_lock.py`)
+5. `04-model` - train / repeat each group
+6. `04-model/.../Grad-CAM_All_9_Models.ipynb` - explain the models
 
-## ผลลัพธ์
+## Results folder
 
-โฟลเดอร์ `src/results/` เก็บผลของแต่ละรัน (ไฟล์ `seed*.json`: เมตริกและประวัติต่อ epoch) และตารางสรุป (`*.csv`)
-ไฟล์น้ำหนักโมเดล (`.pt`) และผลดิบของ grid ทั้งหมดไม่รวมใน repository เนื่องจากมีขนาดใหญ่
+`src/results/` holds the per-run results (`seed*.json`: metrics and per-epoch history) and summary tables (`*.csv`).
+Model weights (`.pt`) and the raw outputs of the full grids are not included because of their size.
 
 ```text
 src/results/
 |-- Resnet18_2D, Resnet18_25D, Resnet50_2D, Resnet50_25D, Resnet50_3D
-|     <ชื่อชุดค่า>/seed{1334,42,2026,7,2002}.json   ชุดค่า top-5 จาก grid + control (รัน 5 seed)
-|     summary_*.csv                                  ตารางสรุปทุกชุดค่าและ top-5
-|     test_*.csv                                     ผลบนชุดทดสอบของชุดที่เลือก
-|-- Resnet18_3D   (ชุด stem_5 และชุดที่เทียบ รวม 10 seed)
+|     <config>/seed{1334,42,2026,7,2002}.json   top-5 grid configs + control (5 seeds)
+|     summary_*.csv, test_*.csv                  summaries and test results of the selected config
+|-- Resnet18_3D
 `-- baseline/
-      runs_baseline_{2D,25D,3D}/                     ผลการพัฒนา Baseline CNN ทุกชุดค่า (3 seed)
-      runs_baseline_{2D,25D}_ep300/                  รันเพิ่มเติมที่ 300 epoch
+      runs_baseline_{2D,25D,3D}/                 Baseline CNN development runs (3 seeds)
+      runs_baseline_{2D,25D}_ep300/              additional 300-epoch runs
 ```
 
-## ข้อควรระวัง
+## Final results
 
-- ห้ามแก้ `split.json`, `processing_lock.py`, `augmentation_lock.py` หลังเริ่มทดลอง เพราะทุกกลุ่มใช้ร่วมกัน
-- ชุดทดสอบเปิดครั้งเดียวหลังล็อกค่าจากชุดตรวจสอบ
-- 2D / 2.5D ใช้น้ำหนักตั้งต้น ImageNet ส่วน 3D เริ่มจากศูนย์ จึงเทียบข้ามรูปแบบข้อมูลได้ระดับประมาณ
+Test set (36 subjects: 15 Alzheimer's / 21 normal), mean +- SD over 5 seeds, threshold 0.5,
+test set opened once after the configurations were locked on the validation set.
+
+| Model | AUC | F1 | Accuracy | Sensitivity | Specificity |
+|---|---|---|---|---|---|
+| Baseline CNN 2D | 0.759 +- 0.059 | 0.651 +- 0.053 | 0.683 +- 0.032 | 0.720 +- 0.137 | 0.657 +- 0.098 |
+| Baseline CNN 2.5D | 0.782 +- 0.044 | 0.704 +- 0.030 | 0.728 +- 0.023 | 0.787 +- 0.119 | 0.686 +- 0.110 |
+| Baseline CNN 3D | 0.766 +- 0.021 | 0.658 +- 0.023 | 0.672 +- 0.012 | 0.760 +- 0.089 | 0.610 +- 0.078 |
+| ResNet-18 2D | **0.855 +- 0.022** | 0.707 +- 0.028 | 0.789 +- 0.015 | 0.613 +- 0.056 | 0.914 +- 0.040 |
+| ResNet-18 2.5D | 0.779 +- 0.039 | 0.679 +- 0.034 | 0.711 +- 0.037 | 0.733 +- 0.082 | 0.695 +- 0.093 |
+| ResNet-18 3D | 0.789 +- 0.078 | 0.653 +- 0.128 | 0.706 +- 0.087 | 0.693 +- 0.203 | 0.714 +- 0.067 |
+| ResNet-50 2D | 0.766 +- 0.041 | 0.686 +- 0.029 | 0.717 +- 0.023 | 0.747 +- 0.087 | 0.695 +- 0.080 |
+| ResNet-50 2.5D | 0.816 +- 0.042 | **0.716 +- 0.057** | 0.733 +- 0.025 | 0.827 +- 0.154 | 0.667 +- 0.083 |
+| ResNet-50 3D | 0.817 +- 0.030 | 0.699 +- 0.067 | 0.739 +- 0.032 | 0.747 +- 0.152 | 0.733 +- 0.072 |
+
+Summary
+
+- ResNet-18 2D has the highest AUC (0.855); ResNet-50 2.5D has the highest F1 (0.716).
+- ResNet-18 2D has high specificity (0.914) but low sensitivity (0.613) because the threshold was fixed at 0.5 and not tuned.
+- With only 36 test subjects, most differences between models are within the variation across seeds, so we do not
+  claim that one model or one input type is clearly better. A simple Baseline CNN is already competitive (AUC 0.76-0.78).
+- Resources (parameters / peak GPU memory / minutes per run): Baseline 16,722-64,642 params, 0.03-1.56 GB, 3-10 min;
+  ResNet-18 11.2-33.1 M, 0.22-2.22 GB, 2-11 min; ResNet-50 23.5-46.2 M, 0.57-4.56 GB, 4-17 min.
+  3D models cost the most memory and time.
+
+Grad-CAM (exploratory)
+
+- 3D models: ResNet-50 3D and Baseline 3D put more attention on the hippocampus region for Alzheimer's cases than for
+  normal cases (hippocampus focus ratio 1.48 vs 0.98 for ResNet-50 3D); ResNet-18 3D shows no clear difference.
+- 2D models use one axial slice that does not contain the hippocampus; the attention of ResNet-18 2D is higher around
+  the ventricles for Alzheimer's cases (ventricular enlargement is a known sign of brain atrophy).
+- 2.5D models rely mostly on the coronal slice (about 45-47% for ResNet) which is the plane that shows the hippocampus.
+- Grad-CAM shows where the model looks, not why the disease occurs; it is not clinical proof.
+
+## Possible improvements
+
+- Tune the decision threshold (or use class-aware metrics) to balance sensitivity and specificity.
+- Use more data: combine OASIS-2 and ADNI, or use k-fold cross-validation, to reduce the variance of a 36-subject test set.
+- Report confidence intervals from per-subject probabilities (save predictions per subject).
+- Use 3D pretrained weights (for example MedicalNet) so that 3D models are not trained from scratch while 2D / 2.5D use ImageNet weights.
+- Use more slices or multiple slice positions for 2D / 2.5D, and add age and sex as covariates or matched controls.
+- Adjust multiple comparisons in the Grad-CAM analysis and validate regions with a clinician.
+
+## Limitations
+
+- Small dataset: 234 subjects, 36 in the test set (15 Alzheimer's). One fixed split; the differences between models are
+  often smaller than the variation across seeds. Per-subject probabilities were not stored, so bootstrap confidence
+  intervals could not be computed from the saved test files.
+- Single dataset (OASIS-1), cross-sectional, one acquisition setup; no external validation on OASIS-2 or ADNI.
+- Binary labels only (CDR 0 vs >= 0.5); severity stages and mild cases are not separated. CDR is a clinical rating,
+  not a pathological confirmation.
+- Model groups are not perfectly comparable: 2D / 2.5D start from ImageNet weights while 3D starts from scratch;
+  Baseline structures differ across input types (for example BatchNorm only in 3D); first-layer kernels differ across groups.
+- Hyperparameters were selected on the validation set of the same split (35 subjects), so some optimism is possible.
+- Age and sex were not matched or controlled; the model may partly use age-related atrophy rather than disease-specific signal.
+- Grad-CAM p-values are exploratory (many tests, not corrected); atlas overlap is approximate (atlas space differs from
+  OASIS space by a few mm, and atrophied brains change the tissue inside a fixed region); the deepest layer is too coarse
+  to localize.
+- This is a research prototype, not a diagnostic tool, and must not be used for clinical decisions.
+
+## Notes
+
+- Do not edit `split.json`, `processing_lock.py` or `augmentation_lock.py` after experiments start; every group shares them.
+- The test set is opened once, after the configurations are locked on the validation set.
+- 2D / 2.5D use ImageNet pretrained weights while 3D starts from scratch, so cross-input comparisons are approximate.
