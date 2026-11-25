@@ -1,0 +1,338 @@
+{
+ "preprocess_hash": "22275bfd6b",
+ "split_hash": "b2a7d0b65d",
+ "fingerprint": "ddcf1dad7a",
+ "n_subjects": 234,
+ "raw_shapes": {
+  "(176, 208, 176, 1)": 234
+ },
+ "crop_shapes": {
+  "(137, 171, 145)": 234
+ },
+ "versions": {
+  "numpy": "2.4.6",
+  "torch": "2.11.0+cu128",
+  "scipy": "1.17.1",
+  "nibabel": "5.4.2"
+ },
+ "n_pass": 42,
+ "n_fail": 0,
+ "n_warn": 21,
+ "checks": [
+  {
+   "name": "ขนาด train/val/test ตรงที่ล็อก",
+   "ok": true,
+   "detail": "163/35/36"
+  },
+  {
+   "name": "ไม่มีคนซ้ำข้าม split",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "ไม่มีคนซ้ำในแต่ละ split",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "รวม 3 split = labels ทั้งหมด",
+   "ok": true,
+   "detail": "234"
+  },
+  {
+   "name": "id เป็นสตริง 4 หลัก",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "label มีแค่ 0 กับ 1",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "เปิดไฟล์ภาพได้ครบทุกคน",
+   "ok": true,
+   "detail": "[]"
+  },
+  {
+   "name": "ขนาดหลังตัดพื้นดำ = 137x171x145 ทุกคน",
+   "ok": true,
+   "detail": "พบ 1 แบบ"
+  },
+  {
+   "name": "shape = (N,128,128,96)",
+   "ok": true,
+   "detail": "(234, 128, 128, 96)"
+  },
+  {
+   "name": "dtype float32",
+   "ok": true,
+   "detail": "float32"
+  },
+  {
+   "name": "ไม่มี NaN / Inf",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "ค่าอยู่ใน [0,1]",
+   "ok": true,
+   "detail": "min 0.000 max 1.000"
+  },
+  {
+   "name": "ทุกคนมี max สูง (~1) และไม่ใช่ภาพว่าง",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "preprocess_hash ใน meta = ค่าที่ล็อก",
+   "ok": true,
+   "detail": "22275bfd6b"
+  },
+  {
+   "name": "checksum รายคนไม่ซ้ำกัน (ไม่ได้โหลดไฟล์เดียวซ้ำ)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "ประมวลผลซ้ำจากไฟล์ดิบ checksum ตรงกับ cache",
+   "ok": true,
+   "detail": "['0430', '0203', '0374', '0451', '0217']"
+  },
+  {
+   "name": "ประมวลผลซ้ำจากไฟล์ดิบ ค่าตรงกับ cache ทุก voxel",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "fingerprint โหลดสองครั้งตรงกัน",
+   "ok": true,
+   "detail": "ddcf1dad7a"
+  },
+  {
+   "name": "3D shape",
+   "ok": true,
+   "detail": "(1, 128, 128, 96)"
+  },
+  {
+   "name": "2D shape",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "2.5D shape",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "2D out_size=224",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "2.5D out_size=224",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "ภาพไม่หมุน: 2D = ชิ้น z=48",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "หมุนบนภาพจริง: 3D / 2D / 2.5D ตรงกับ scipy rotate ทั้ง volume",
+   "ok": true,
+   "detail": "ต่างสูงสุด 0.00e+00"
+  },
+  {
+   "name": "angle_for: ค่าเดิมเมื่อ (seed,epoch,subject) เดิม ไม่ขึ้นกับ RNG ส่วนกลาง",
+   "ok": true,
+   "detail": "1.2110128334604866"
+  },
+  {
+   "name": "angle_for: อยู่ในช่วง ±15 และกระจายเกือบทั้งช่วง (uniform)",
+   "ok": true,
+   "detail": "min -14.96 max 14.98 mean -0.04"
+  },
+  {
+   "name": "angle_for: epoch ต่างกันได้มุมต่างกัน",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "batch shape (3D)",
+   "ok": true,
+   "detail": "(8, 1, 128, 128, 96)"
+  },
+  {
+   "name": "batch dtype float32 / label int64",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "batch ค่าอยู่ใน [0,1]",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "augment: seed+epoch+คน เดิม → ภาพเดิมเป๊ะ",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "augment: epoch ต่างกัน → ภาพหมุนต่างกัน",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "val ไม่หมุน (epoch ไหนก็เหมือนเดิม)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "seed เดียวกัน → output โมเดลเหมือนเดิม",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "smoke train: loss เป็นตัวเลขปกติ",
+   "ok": true,
+   "detail": "first 0.709 last 0.697"
+  },
+  {
+   "name": "[DenseNet121_k8.ipynb] ไม่เจอ: อ่านรายชื่อจาก split.json",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[DenseNet121_k8.ipynb] ไม่เจอ: ใช้ processing_lock / load_locked",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[DenseNet121_k8.ipynb] ไม่เจอ: สร้างอินพุตด้วย make_input",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[DenseNet121_k8.ipynb] ไม่เจอ: ใช้มุมจาก augmentation_lock.angle_for",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[DenseNet121_k8.ipynb] ตั้ง seed (torch.manual_seed)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[DenseNet121_k8.ipynb] cudnn.deterministic",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[DenseNet121_k8.ipynb] พบการ resize ในโน้ตบุ๊ก (ถ้าเป็นขั้นปรับเข้าโมเดลตามที่ตกลงได้ แต่ห้ามใช้แทน target shape ที่ล็อก)",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[DenseNet121_k8.ipynb] พบการแบ่งข้อมูลเอง (ต้องใช้ split.json อย่างเดียว ยกเว้นโน้ตบุ๊ก K-Fold)",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[DenseNet121_k8.ipynb] พบ random_state (ตรวจว่าไม่ได้ใช้แบ่งข้อมูลเอง)",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[EfficientNet_B0_SD0.2.ipynb] ไม่เจอ: อ่านรายชื่อจาก split.json",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[EfficientNet_B0_SD0.2.ipynb] ไม่เจอ: ใช้ processing_lock / load_locked",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[EfficientNet_B0_SD0.2.ipynb] ไม่เจอ: สร้างอินพุตด้วย make_input",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[EfficientNet_B0_SD0.2.ipynb] ไม่เจอ: ใช้มุมจาก augmentation_lock.angle_for",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[EfficientNet_B0_SD0.2.ipynb] ตั้ง seed (torch.manual_seed)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[EfficientNet_B0_SD0.2.ipynb] cudnn.deterministic",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[EfficientNet_B0_SD0.2.ipynb] พบการ resize ในโน้ตบุ๊ก (ถ้าเป็นขั้นปรับเข้าโมเดลตามที่ตกลงได้ แต่ห้ามใช้แทน target shape ที่ล็อก)",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[EfficientNet_B0_SD0.2.ipynb] พบการแบ่งข้อมูลเอง (ต้องใช้ split.json อย่างเดียว ยกเว้นโน้ตบุ๊ก K-Fold)",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[EfficientNet_B0_SD0.2.ipynb] พบ random_state (ตรวจว่าไม่ได้ใช้แบ่งข้อมูลเอง)",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[ResNet18_Kernel3.ipynb] ไม่เจอ: อ่านรายชื่อจาก split.json",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[ResNet18_Kernel3.ipynb] ไม่เจอ: ใช้ processing_lock / load_locked",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[ResNet18_Kernel3.ipynb] ไม่เจอ: สร้างอินพุตด้วย make_input",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[ResNet18_Kernel3.ipynb] ไม่เจอ: ใช้มุมจาก augmentation_lock.angle_for",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[ResNet18_Kernel3.ipynb] ตั้ง seed (torch.manual_seed)",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[ResNet18_Kernel3.ipynb] cudnn.deterministic",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "[ResNet18_Kernel3.ipynb] พบการ resize ในโน้ตบุ๊ก (ถ้าเป็นขั้นปรับเข้าโมเดลตามที่ตกลงได้ แต่ห้ามใช้แทน target shape ที่ล็อก)",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[ResNet18_Kernel3.ipynb] พบการแบ่งข้อมูลเอง (ต้องใช้ split.json อย่างเดียว ยกเว้นโน้ตบุ๊ก K-Fold)",
+   "ok": null,
+   "detail": ""
+  },
+  {
+   "name": "[ResNet18_Kernel3.ipynb] พบ random_state (ตรวจว่าไม่ได้ใช้แบ่งข้อมูลเอง)",
+   "ok": null,
+   "detail": ""
+  }
+ ]
+}

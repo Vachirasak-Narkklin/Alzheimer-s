@@ -1,0 +1,20 @@
+# ข้อมูลและไฟล์ขนาดใหญ่ ไม่ขึ้น repository
+*.pt
+*.pth
+*.npy
+*.npz
+*.nii
+*.nii.gz
+*.tar.gz
+*.zip
+locked_cache/
+runs_*/
+!src/results/baseline/runs_*/
+gradcam_output/
+
+# ไฟล์ระบบ
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+.DS_Store
+_backup_before_clean/

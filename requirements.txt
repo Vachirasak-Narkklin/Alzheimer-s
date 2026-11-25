@@ -1,0 +1,9 @@
+# ไลบรารีที่ใช้ในโน้ตบุ๊ก (ยังไม่ล็อกเวอร์ชัน ใส่เวอร์ชันที่ใช้จริงด้วย `pip freeze` บนเซิร์ฟเวอร์)
+torch
+numpy
+pandas
+scikit-learn
+matplotlib
+nibabel
+SimpleITK
+jupyterlab

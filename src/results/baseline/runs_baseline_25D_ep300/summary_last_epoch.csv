@@ -1,0 +1,2 @@
+การทดลอง,จำนวน seed,AUC,F1,Accuracy,Sensitivity,Specificity
+kernel_5,5,0.797 ± 0.059,0.614 ± 0.068,0.691 ± 0.062,0.587 ± 0.173,0.770 ± 0.192
